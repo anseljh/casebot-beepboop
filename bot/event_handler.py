@@ -141,7 +141,7 @@ class RtmEventHandler(object):
                     if find_re_result:
                         query = find_re_result.group(1)
                         find_result = handle_find(query)
-                        if find_resul:
+                        if find_result:
                             self.msg_writer.send_message(event['channel'], find_result)
                         else:
                             logger.debug("No matches for query: %s" % (query))
