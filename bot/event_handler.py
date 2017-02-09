@@ -12,22 +12,21 @@ CL_FIND_URL_TEMPLATE = Template("https://www.courtlistener.com/api/rest/v3/searc
 MINIMUM_VIABLE_CITATION_PATTERN = r"^(\d+)\s([A-Za-z0-9.\s]+)\s(\d+)$"
 FIND_PATTERN = r"find\s+(.+)$"
 FIND_RE = re.compile(FIND_PATTERN)
+USER_AGENT="casebot https://github.com/anseljh/casebot-beepboop"
 
 def handle_find(query):
     """
     The `find` command searches CourtListener by case name.
     https://github.com/anseljh/casebot/issues/3
     """
-    # global config
-
     reply = None
 
     url = CL_FIND_URL_TEMPLATE.substitute({'query': query})
-    request_headers = {'user-agent': config['General']['user_agent']}
+    request_headers = {'user-agent': USER_AGENT}
 
     # Authenticate to CourtListener using token
     # https://github.com/anseljh/casebot/issues/7
-    cl_token = config.get('CourtListener').get('courtlistener_token')
+    # cl_token = config.get('CourtListener').get('courtlistener_token')
     # if cl_token is not None:
     #     request_headers['Authenticate'] = 'Token ' + cl_token
     #     print("Added CL Authentication Token header")
@@ -71,14 +70,12 @@ def handle_find(query):
     return reply
 
 def handle_citation(message, volume=None, reporter=None, page=None):
-    # global config
-
     reply = None
 
     # Look up using CourtListener /c tool
     mapping = {'volume': volume, 'reporter': reporter, 'page': page}
     url = CL_URL_TEMPLATE.substitute(mapping)
-    request_headers = {'user-agent': config['General']['user_agent']}
+    request_headers = {'user-agent': USER_AGENT}
     response = requests.get(url, headers=request_headers)
 
     # Give some output on stdout
