@@ -5,11 +5,15 @@ import requests
 from string import Template
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# TODO: Actually do authentication with CL
 
 # Stuff brought in from original casebot
 CL_URL_TEMPLATE = Template("https://www.courtlistener.com/c/$reporter/$volume/$page/")
 CL_FIND_URL_TEMPLATE = Template("https://www.courtlistener.com/api/rest/v3/search/?format=json&q=casename%3A($query)")
 MINIMUM_VIABLE_CITATION_PATTERN = r"^(\d+)\s([A-Za-z0-9.\s]+)\s(\d+)$"
+MINIMUM_VIABLE_CITATION_PATTERN_RE = re.compile(MINIMUM_VIABLE_CITATION_PATTERN)
 FIND_PATTERN = r"find\s+(.+)$"
 FIND_RE = re.compile(FIND_PATTERN)
 USER_AGENT="casebot https://github.com/anseljh/casebot-beepboop"
@@ -69,25 +73,34 @@ def handle_find(query):
         reply = "CourtListener had zero results for the query `%s`" % (query)
     return reply
 
-def handle_citation(message, volume=None, reporter=None, page=None):
+def handle_citation(message):
     reply = None
+    re_result = MINIMUM_VIABLE_CITATION_PATTERN_RE.search(message)
 
-    # Look up using CourtListener /c tool
-    mapping = {'volume': volume, 'reporter': reporter, 'page': page}
-    url = CL_URL_TEMPLATE.substitute(mapping)
-    request_headers = {'user-agent': USER_AGENT}
-    response = requests.get(url, headers=request_headers)
+    if re_result:
+        volume, reporter, page = re_result.groups()
+        logger.debug("Volume: %s | Reporter: %s | Page: %s" % (volume, reporter, page))
 
-    # Give some output on stdout
-    logger.debug(response)
-    logger.debug(response.headers)
-    logger.debug(response.url)
+        # Look up using CourtListener /c tool
+        mapping = {'volume': volume, 'reporter': reporter, 'page': page}
+        url = CL_URL_TEMPLATE.substitute(mapping)
+        request_headers = {'user-agent': USER_AGENT}
+        response = requests.get(url, headers=request_headers)
 
-    # Send the message!
-    if response.status_code == 404:
-        reply = "Sorry, I can't find that citation in CourtListener."
+        # Give some output on stdout
+        logger.debug(response)
+        logger.debug(response.headers)
+        logger.debug(response.url)
+
+        # Send the message!
+        if response.status_code == 404:
+            reply = "Sorry, I can't find that citation in CourtListener."
+        else:
+            reply = response.url
+
     else:
-        reply = response.url
+        reply = "Bad citation."
+
     return reply
 
 
