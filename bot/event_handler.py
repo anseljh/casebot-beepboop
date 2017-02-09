@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import requests
+from string import Template
 
 logger = logging.getLogger(__name__)
 
